@@ -1,7 +1,10 @@
 TAGS ?= "sqlite"
 CURL_BIN ?= curl
 GO_BIN ?= go
-LINT_BIN ?= ./bin/gometalinter
+LINT_BIN ?= gometalinter
+
+export PATH := ./bin:$(PATH)
+
 
 install: deps
 
