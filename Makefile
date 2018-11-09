@@ -1,24 +1,22 @@
 TAGS ?= "sqlite"
+CURL_BIN ?= curl
 GO_BIN ?= go
-SODA_BIN ?= ~/go/bin/soda
 
 install: deps
 
 deps:
 	$(GO_BIN) get -tags ${TAGS} ./...
 	$(GO_BIN) get -tags ${TAGS} github.com/gobuffalo/pop/soda
+	$(CURL_BIN) -L https://git.io/vp6lP | sh
 ifeq ($(GO111MODULE),on)
 	$(GO_BIN) mod tidy
 endif
-
-db:
-	$(SODA_BIN) help
 
 test:
 	$(GO_BIN) test -tags ${TAGS} ./...
 
 ci-test:
-	$(GO_BIN) test -tags ${TAGS} -race ./...
+	$(GO_BIN) test -tags ${TAGS} -race  -coverprofile=coverage.txt -covermode=atomic ./...
 
 lint:
 	gometalinter --vendor ./... --deadline=1m --skip=internal
