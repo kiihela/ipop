@@ -6,8 +6,8 @@ This should allow you to remove the dependency on a real database in your unit t
 
 ## Build status
 
-[![](https://travis-ci.org/dnnrly/ipop.svg?branch=master)](https://travis-ci.org/dnnrly/ipop)
-[![](https://codecov.io/gh/dnnrly/ipop/branch/master/graph/badge.svg)](https://codecov.io/gh/dnnrly/ipop)
+[![Build Status](https://travis-ci.org/dnnrly/ipop.svg?branch=master)](https://travis-ci.org/dnnrly/ipop)
+[![codecov](https://codecov.io/gh/dnnrly/ipop/branch/master/graph/badge.svg)](https://codecov.io/gh/dnnrly/ipop)
 [![](https://godoc.org/github.com/dnnrly/ipop?status.svg)](http://godoc.org/github.com/dnnrly/ipop)
 [![](https://goreportcard.com/badge/github.com/dnnrly/ipop)](https://goreportcard.com/report/github.com/dnnrly/ipop)
 
