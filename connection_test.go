@@ -20,9 +20,8 @@ func init() {
 	if err != nil {
 		log.Panic(err)
 	}
-
-	connection.
-		db = connection
+	
+	db = connection
 }
 
 func ExampleSimpleFindSingle() {
