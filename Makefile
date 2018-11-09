@@ -1,6 +1,7 @@
 TAGS ?= "sqlite"
 CURL_BIN ?= curl
 GO_BIN ?= go
+LINT_BIN ?= ./bin/gometalinter
 
 install: deps
 
@@ -19,7 +20,7 @@ ci-test:
 	$(GO_BIN) test -tags ${TAGS} -race  -coverprofile=coverage.txt -covermode=atomic ./...
 
 lint:
-	gometalinter --vendor ./... --deadline=1m --skip=internal
+	$(LINT_BIN) --vendor ./... --deadline=1m --skip=internal
 
 update:
 	$(GO_BIN) get -u -tags ${TAGS}
