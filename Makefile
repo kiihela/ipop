@@ -6,7 +6,7 @@ GO_BIN ?= go
 LINT_BIN ?= gometalinter
 
 export PATH := ./bin:$(PATH)
-
+export GOPATH := ~/go
 
 install: deps
 
