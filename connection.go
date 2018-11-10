@@ -2,7 +2,28 @@ package ipop
 
 import (
 	"github.com/gobuffalo/pop"
+	"github.com/gobuffalo/validate"
 )
+
+type popCBErr func(tx *pop.Connection) error
+type popCB func(tx *pop.Connection)
+type cbErr func(tx Connection) error
+type cb func(tx Connection)
+
+func cbConvert(cfn cb) popCB {
+	return func(tx *pop.Connection) {
+		ctx := NewConnectionAdapter(tx)
+		cfn(ctx)
+	}
+}
+
+func cbConvertErr(cfn cbErr) popCBErr {
+	return func(tx *pop.Connection) error {
+		ctx := NewConnectionAdapter(tx)
+		return cfn(ctx)
+	}
+}
+
 
 // Connection represents a Buffalo pop connection to a database
 type Connection interface {
@@ -24,12 +45,139 @@ type Connection interface {
 	// NewTransaction starts a new transaction on the connection
 	NewTransaction() (Connection, error)
 	// Rollback will open a new transaction and automatically rollback that transaction
-	// when the inner function returns, regardless. This can be useful for tests, etc...
+	// when the inner function returns, regardless. This can be useful for tests, etc.conn...
 	Rollback(fn func(tx Connection)) error
 	// Q creates a new "empty" query for the current connection.
-	Q() Query
+	Q() *pop.Query
 	// TruncateAll truncates all data from the datasource
 	TruncateAll() error
+
+	// BelongsTo adds a "where" clause based on the "ID" of the
+	// "model" passed into it.
+	BelongsTo(model interface{}) *pop.Query
+	// BelongsToAs adds a "where" clause based on the "ID" of the
+	// "model" passed into it using an alias.
+	BelongsToAs(model interface{}, as string) *pop.Query
+	// BelongsToThrough adds a "where" clause that connects the "bt" model
+	// through the associated "thru" model.
+	BelongsToThrough(bt, thru interface{}) *pop.Query
+
+	// Reload fetch fresh data for a given model, using its ID.
+	Reload(model interface{}) error
+	// ValidateAndSave applies validation rules on the given entry, then save it
+	// if the validation succeed, excluding the given columns.
+	ValidateAndSave(model interface{}, excludeColumns ...string) (*validate.Errors, error)
+	// Save wraps the Create and Update methods. It executes a Create if no ID is provided with the entry;
+	// or issues an Update otherwise.
+	Save(model interface{}, excludeColumns ...string) error
+	// ValidateAndCreate applies validation rules on the given entry, then creates it
+	// if the validation succeed, excluding the given columns.
+	ValidateAndCreate(model interface{}, excludeColumns ...string) (*validate.Errors, error)
+	// Create add a new given entry to the database, excluding the given columns.
+	// It updates `created_at` and `updated_at` columns automatically.
+	Create(model interface{}, excludeColumns ...string) error
+	// ValidateAndUpdate applies validation rules on the given entry, then update it
+	// if the validation succeed, excluding the given columns.
+	ValidateAndUpdate(model interface{}, excludeColumns ...string) (*validate.Errors, error)
+	// Update writes changes from an entry to the database, excluding the given columns.
+	// It updates the `updated_at` column automatically.
+	Update(model interface{}, excludeColumns ...string) error
+	// Destroy deletes a given entry from the database
+	Destroy(model interface{}) error
+
+	// Find the first record of the model in the database with a particular id.
+	//
+	//	c.Find(&User{}, 1)
+	Find(model interface{}, id interface{}) error
+	// First record of the model in the database that matches the query.
+	//
+	//	c.First(&User{})
+	First(model interface{}) error
+	// Last record of the model in the database that matches the query.
+	//
+	//	c.Last(&User{})
+	Last(model interface{}) error
+	// All retrieves all of the records in the database that match the query.
+	//
+	//	c.All(&[]User{})
+	All(models interface{}) error
+	// Load loads all association or the fields specified in params for
+	// an already loaded model.
+	//
+	// tx.First(&u)
+	// tx.Load(&u)
+	Load(model interface{}, fields ...string) error
+	// Count the number of records in the database.
+	//
+	//	c.Count(&User{})
+	Count(model interface{}) (int, error)
+	// Select allows to query only fields passed as parameter.
+	// c.conn.Select("field1", "field2").All(&model)
+	// => SELECT field1, field2 FROM models
+	Select(fields ...string) *pop.Query
+
+	// MigrateUp is deprecated, and will be removed in a future version. Use FileMigrator#Up instead.
+	MigrateUp(path string) error
+	// MigrateDown is deprecated, and will be removed in a future version. Use FileMigrator#Down instead.
+	MigrateDown(path string, step int) error
+	// MigrateStatus is deprecated, and will be removed in a future version. Use FileMigrator#Status instead.
+	MigrateStatus(path string) error
+	// MigrateReset is deprecated, and will be removed in a future version. Use FileMigrator#Reset instead.
+	MigrateReset(path string) error
+
+	// Paginate records returned from the database.
+	//
+	//	return c.conn.Paginate(2, 15)
+	//	q.All(&[]User{})
+	//	q.Paginator
+	Paginate(page int, perPage int) *pop.Query
+	// PaginateFromParams paginates records returned from the database.
+	//
+	//	return c.conn.PaginateFromParams(req.URL.Query())
+	//	q.All(&[]User{})
+	//	q.Paginator
+	PaginateFromParams(params pop.PaginationParams) *pop.Query
+
+	// RawQuery will override the query building feature of Pop and will use
+	// whatever query you want to execute against the `Connection`. You can continue
+	// to use the `?` argument syntax.
+	//
+	//	c.RawQuery("select * from foo where id = ?", 1)
+	RawQuery(stmt string, args ...interface{}) *pop.Query
+	// Eager will enable load associations of the model.
+	// by defaults loads all the associations on the model,
+	// but can take a variadic list of associations to load.
+	//
+	// 	c.Eager().Find(model, 1) // will load all associations for model.
+	// 	c.Eager("Books").Find(model, 1) // will load only Book association for model.
+	Eager(fields ...string) Connection
+	// Where will append a where clause to the query. You may use `?` in place of
+	// arguments.
+	//
+	// 	c.Where("id = ?", 1)
+	// 	q.Where("id in (?)", 1, 2, 3)
+	Where(stmt string, args ...interface{}) *pop.Query
+	// Order will append an order clause to the query.
+	//
+	// 	c.Order("name desc")
+	Order(stmt string) *pop.Query
+	// Limit will add a limit clause to the query.
+	Limit(limit int) *pop.Query
+
+	// Scope the query by using a `ScopeFunc`
+	//
+	//	func ByName(name string) ScopeFunc {
+	//		return func(q Query) Query {
+	//			return q.Where("name = ?", name)
+	//		}
+	//	}
+	//
+	//	func WithDeleted(q *pop.Query) *pop.Query {
+	//		return q.Where("deleted_at is null")
+	//	}
+	//
+	//	c.Scope(ByName("mark)).Scope(WithDeleted).First(&User{})
+	Scope(sf pop.ScopeFunc) *pop.Query
 }
 
 type ConnectionAdapter struct {
@@ -41,49 +189,167 @@ func NewConnectionAdapter(c *pop.Connection) *ConnectionAdapter {
 }
 
 func (c *ConnectionAdapter) String() string {
-	return c.String()
+	return c.conn.String()
 }
 
 func (c *ConnectionAdapter) URL() string {
-	return c.URL()
+	return c.conn.URL()
 }
 
 func (c *ConnectionAdapter) MigrationURL() string {
-	return c.MigrationURL()
+	return c.conn.MigrationURL()
 }
 
 func (c *ConnectionAdapter) MigrationTableName() string {
-	return c.MigrationTableName()
+	return c.conn.MigrationTableName()
 }
 
 func (c *ConnectionAdapter) Open() error {
-	return c.Open()
+	return c.conn.Open()
 }
 
 func (c *ConnectionAdapter) Close() error {
-	return c.Close()
+	return c.conn.Close()
 }
 
 func (c *ConnectionAdapter) Transaction(fn func(tx Connection) error) error {
-	return c.Transaction(fn)
+	return c.conn.Transaction(cbConvertErr(fn))
 }
 
 func (c *ConnectionAdapter) NewTransaction() (Connection, error) {
-	conn, err := c.NewTransaction()
-
-	return Connection(conn), err
+	conn, err := c.conn.NewTransaction()
+	return NewConnectionAdapter(conn), err
 }
 
 func (c *ConnectionAdapter) Rollback(fn func(tx Connection)) error {
-	return c.Rollback(fn)
+	return c.conn.Rollback(cbConvert(fn))
 }
 
-func (c *ConnectionAdapter) Q() Query {
-	q := c.Q()
-
-	return Query(q)
+func (c *ConnectionAdapter) Q() *pop.Query {
+	return c.conn.Q()
 }
 
 func (c *ConnectionAdapter) TruncateAll() error {
-	return c.TruncateAll()
+	return c.conn.TruncateAll()
+}
+
+func (c *ConnectionAdapter) BelongsTo(model interface{}) *pop.Query {
+	return c.conn.BelongsTo(model)
+}
+
+func (c *ConnectionAdapter) BelongsToAs(model interface{}, as string) *pop.Query {
+	return c.conn.BelongsToAs(model, as)
+}
+
+func (c *ConnectionAdapter) BelongsToThrough(bt interface{}, thru interface{}) *pop.Query {
+	return c.conn.BelongsToThrough(bt, thru)
+}
+
+func (c *ConnectionAdapter) Reload(model interface{}) error {
+	return c.conn.Reload(model)
+}
+
+func (c *ConnectionAdapter) ValidateAndSave(model interface{}, excludeColumns ...string) (*validate.Errors, error) {
+	return c.conn.ValidateAndSave(model, excludeColumns...)
+}
+
+func (c *ConnectionAdapter) Save(model interface{}, excludeColumns ...string) error {
+	return c.conn.Save(model, excludeColumns...)
+}
+
+func (c *ConnectionAdapter) ValidateAndCreate(model interface{}, excludeColumns ...string) (*validate.Errors, error) {
+	return c.conn.ValidateAndCreate(model, excludeColumns...)
+}
+
+func (c *ConnectionAdapter) Create(model interface{}, excludeColumns ...string) error {
+	return c.conn.Create(model, excludeColumns...)
+}
+
+func (c *ConnectionAdapter) ValidateAndUpdate(model interface{}, excludeColumns ...string) (*validate.Errors, error) {
+	return c.conn.ValidateAndUpdate(model, excludeColumns...)
+}
+
+func (c *ConnectionAdapter) Update(model interface{}, excludeColumns ...string) error {
+	return c.conn.Update(model, excludeColumns...)
+}
+
+func (c *ConnectionAdapter) Destroy(model interface{}) error {
+	return c.conn.Destroy(model)
+}
+
+func (c *ConnectionAdapter) Find(model interface{}, id interface{}) error {
+	return c.conn.Find(model, id)
+}
+
+func (c *ConnectionAdapter) First(model interface{}) error {
+	return c.conn.First(model)
+}
+
+func (c *ConnectionAdapter) Last(model interface{}) error {
+	return c.conn.Last(model)
+}
+
+func (c *ConnectionAdapter) All(models interface{}) error {
+	return c.conn.All(models)
+}
+
+func (c *ConnectionAdapter) Load(model interface{}, fields ...string) error {
+	return c.conn.Load(model, fields...)
+}
+
+func (c *ConnectionAdapter) Count(model interface{}) (int, error) {
+	return c.conn.Count(model)
+}
+
+func (c *ConnectionAdapter) Select(fields ...string) *pop.Query {
+	return c.conn.Select(fields...)
+}
+
+func (c *ConnectionAdapter) MigrateUp(path string) error {
+	return c.conn.MigrateUp(path)
+}
+
+func (c *ConnectionAdapter) MigrateDown(path string, step int) error {
+	return c.conn.MigrateDown(path, step)
+}
+
+func (c *ConnectionAdapter) MigrateStatus(path string) error {
+	return c.conn.MigrateStatus(path)
+}
+
+func (c *ConnectionAdapter) MigrateReset(path string) error {
+	return c.conn.MigrateReset(path)
+}
+
+func (c *ConnectionAdapter) Paginate(page int, perPage int) *pop.Query {
+	return c.conn.Paginate(page, perPage)
+}
+
+func (c *ConnectionAdapter) PaginateFromParams(params pop.PaginationParams) *pop.Query {
+	return c.conn.PaginateFromParams(params)
+}
+
+func (c *ConnectionAdapter) RawQuery(stmt string, args ...interface{}) *pop.Query {
+	return c.conn.RawQuery(stmt, args...)
+}
+
+func (c *ConnectionAdapter) Eager(fields ...string) Connection {
+	popConn := c.conn.Eager(fields...)
+	return NewConnectionAdapter(popConn)
+}
+
+func (c *ConnectionAdapter) Where(stmt string, args ...interface{}) *pop.Query {
+	return c.conn.Where(stmt, args...)
+}
+
+func (c *ConnectionAdapter) Order(stmt string) *pop.Query {
+	return c.conn.Order(stmt)
+}
+
+func (c *ConnectionAdapter) Limit(limit int) *pop.Query {
+	return c.conn.Limit(limit)
+}
+
+func (c *ConnectionAdapter) Scope(sf pop.ScopeFunc) *pop.Query {
+	return c.conn.Scope(sf)
 }

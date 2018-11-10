@@ -1,4 +1,6 @@
 TAGS ?= "sqlite"
+LDFLAGS ?= "-X ipop.Debug=true -X ipop.Color=true"
+
 CURL_BIN ?= curl
 GO_BIN ?= go
 LINT_BIN ?= gometalinter
@@ -17,10 +19,10 @@ ifeq ($(GO111MODULE),on)
 endif
 
 test:
-	$(GO_BIN) test -tags ${TAGS} ./...
+	$(GO_BIN) test -tags ${TAGS} -ldflags ${LDFLAGS} ./...
 
 ci-test:
-	$(GO_BIN) test -tags ${TAGS} -race  -coverprofile=coverage.txt -covermode=atomic ./...
+	$(GO_BIN) test -tags ${TAGS} -ldflags ${LDFLAGS} -race  -coverprofile=coverage.txt -covermode=atomic ./...
 
 lint:
 	$(LINT_BIN) --vendor ./... --deadline=1m --skip=internal

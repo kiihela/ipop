@@ -1,0 +1,6 @@
+create_table("teams") {
+	t.Column("id", "uuid", {"primary": true})
+	t.Column("name", "string", {})
+	t.Column("leader", "user", {})
+	t.Column("members", "[]user", {})
+}
