@@ -11,7 +11,6 @@ install: deps
 
 deps:
 	$(GO_BIN) get -tags ${TAGS} ./...
-	$(GO_BIN) mod vendor
 	$(GO_BIN) get -tags ${TAGS} github.com/gobuffalo/pop/soda
 	$(CURL_BIN) -L https://git.io/vp6lP | sh
 ifeq ($(GO111MODULE),on)
