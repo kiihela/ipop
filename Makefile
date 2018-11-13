@@ -18,9 +18,11 @@ ifeq ($(GO111MODULE),on)
 endif
 
 test:
+	rm -f .test.sqlite
 	$(GO_BIN) test -tags ${TAGS} -ldflags ${LDFLAGS} ./...
 
 ci-test:
+	rm -f .test.sqlite
 	$(GO_BIN) test -tags ${TAGS} -ldflags ${LDFLAGS} -race  -coverprofile=coverage.txt -covermode=atomic ./...
 
 lint:

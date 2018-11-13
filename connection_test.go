@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"testing"
 
 	"github.com/dnnrly/ipop/testdata/models"
@@ -79,7 +80,7 @@ func TestConnectionAdapter_SaveAndUpdating(t *testing.T) {
 	assert.NoError(t, db.Destroy(&found))
 }
 
-func TestConnectionAdapter_CreateAndFirst(t *testing.T) {
+func TestConnectionAdapter_CreateAndQueries(t *testing.T) {
 	assert.NoError(t, db.TruncateAll())
 
 	for i := 0; i < 100; i++ {
@@ -105,11 +106,27 @@ func TestConnectionAdapter_CreateAndFirst(t *testing.T) {
 	assert.NoError(t, db.Last(&last))
 	assert.Equal(t, all[99].ID, last.ID)
 
-	var page []models.User
-	q := db.Paginate(2, 2)
-	assert.NoError(t, q.All(&page))
-	assert.Equal(t, "User #3", page[0].Name)
-	assert.Equal(t, "User #4", page[1].Name)
+	var page2 []models.User
+	q1 := db.Paginate(2, 2)
+	assert.NoError(t, q1.All(&page2))
+	assert.Equal(t, "User #3", page2[0].Name)
+	assert.Equal(t, "User #4", page2[1].Name)
+
+	var page3 []models.User
+	q2 := db.PaginateFromParams(url.Values{"page": {"3"}, "per_page": {"2"}})
+	assert.NoError(t, q2.All(&page3))
+	assert.Equal(t, "User #5", page3[0].Name)
+	assert.Equal(t, "User #6", page3[1].Name)
+
+	var where []models.User
+	q3 := db.Where("Name = ?", "User #10")
+	assert.NoError(t, q3.All(&where))
+	assert.Equal(t, 1, len(where))
+
+	var order []models.User
+	q4 := db.Order("name desc")
+	assert.NoError(t, q4.All(&order))
+	assert.Equal(t, "User #99", order[0].Name)
 
 	assert.NoError(t, db.TruncateAll())
 
@@ -141,7 +158,7 @@ func TestConnectionAdapter_TransactionFails(t *testing.T) {
 
 	err = tx.Transaction(func(tx Connection) error {
 		called = true
-		return errors.New("Oops!")
+		return errors.New("ooops")
 	})
 
 	assert.Error(t, err)
