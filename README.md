@@ -2,7 +2,7 @@
 This project allows you to abstract away to `struct` types used in `github.com/gobuffalo/pop`.
 
 ## Motivation
-This should allow you to remove the dependency on a real database in your unit tests when writing [Buffalo](https://github.com/gobuffalo/buffalo) application.
+This allows you to abstract away the real [`pop`](https://github.com/gobuffalo/pop) package with your own implementation, whether for some new backend or just for mocking in your unit tests.
 
 ## Build status
 
@@ -11,15 +11,15 @@ This should allow you to remove the dependency on a real database in your unit t
 [![](https://godoc.org/github.com/dnnrly/ipop?status.svg)](http://godoc.org/github.com/dnnrly/ipop)
 [![](https://goreportcard.com/badge/github.com/dnnrly/ipop)](https://goreportcard.com/report/github.com/dnnrly/ipop)
 
-## Code Example
-Show what the library does as concisely as possible, developers should be able to figure out **how** your project solves their problem by looking at the code example. Make sure the API you are showing off is obvious, and that your code is short and concise.
-
 ## Installation
-Provide step by step series of examples and explanations about how to get a development env running.
+```
+go get github.com/dnnrly/ipop
+```
+
+Or if you're using modules then just import it in your code.
 
 ## API Reference
-
-Depending on the size of the project, if it is small and simple enough the reference docs can be added to the README. For medium size to larger projects it is important to at least provide a link to where the API reference docs live.
+This aims to be API compatible with [`pop`](https://github.com/gobuffalo/pop).
 
 ## Tests
 Run tests by using the command:
@@ -31,13 +31,10 @@ make test
 See the godoc examples.
 
 ## Contribute
-
-Let people know how they can contribute into your project. A [contributing guideline](https://github.com/dnnrly/ipop/blob/master/CONTRIBUTING.md) will be a big plus.
+Please see the [contributing guideline](https://github.com/dnnrly/ipop/blob/master/CONTRIBUTING.md).
 
 ## Credits
-Give proper credits. This could be a link to any repo which inspired you to build this project, any blogposts or links to people who contrbuted in this project. 
-
-#### Anything else that seems useful
+This is basically just wrapping up [`pop`](https://github.com/gobuffalo/pop). All the praise goes to them - and then some. 
 
 ## License
 
