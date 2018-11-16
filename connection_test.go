@@ -42,6 +42,12 @@ func init() {
 	db = NewConnectionAdapter(connection)
 }
 
+func ExampleNewConnectionAdapter() {
+	popConnection, _ := pop.Connect("test")
+	adapted := NewConnectionAdapter(popConnection)
+	adapted.String() // Use it as you would *pop.Connection
+}
+
 func TestConnectionAdapter_Strings(t *testing.T) {
 	assert.Equal(t, popConn.String(), db.String())
 	assert.Equal(t, popConn.URL(), db.URL())
@@ -148,6 +154,42 @@ func TestConnectionAdapter_TransactionWorks(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.True(t, called)
+}
+
+func TestConnectionAdapter_Verification(t *testing.T) {
+	user := models.User{
+		Name: "George",
+	}
+
+	verrs, _ := db.ValidateAndCreate(&user)
+	assert.Equal(t, 0, len(verrs.Errors))
+	origUpdated := user.UpdatedAt
+
+	found := models.User{}
+	assert.NoError(t, db.Find(&found, user.ID))
+	assert.False(t, found.CreatedAt.IsZero())
+
+	updated := models.User{
+		ID:   user.ID,
+		Name: "Not that person",
+	}
+
+	verrs, _ = db.ValidateAndSave(&updated)
+	assert.Equal(t, 0, len(verrs.Errors))
+	assert.False(t, found.UpdatedAt.IsZero())
+	assert.NotEqual(t, origUpdated.String(), found.UpdatedAt.String())
+
+	assert.NoError(t, db.Find(&found, user.ID))
+	assert.Equal(t, "Not that person", found.Name)
+
+	updated.Name = "Someone else"
+	verrs, _ = db.ValidateAndUpdate(&updated)
+	assert.Equal(t, 0, len(verrs.Errors))
+
+	assert.NoError(t, db.Find(&found, user.ID))
+	assert.Equal(t, "Someone else", found.Name)
+
+	assert.NoError(t, db.Destroy(&found))
 }
 
 func TestConnectionAdapter_TransactionFails(t *testing.T) {
