@@ -1,8 +1,8 @@
 package ipop
 
 import (
-	"github.com/gobuffalo/pop"
-	"github.com/gobuffalo/validate"
+	"github.com/gobuffalo/pop/v6"
+	"github.com/gobuffalo/validate/v3"
 )
 
 type popCBErr func(tx *pop.Connection) error
@@ -114,15 +114,6 @@ type Connection interface {
 	// c.conn.Select("field1", "field2").All(&model)
 	// => SELECT field1, field2 FROM models
 	Select(fields ...string) *pop.Query
-
-	// MigrateUp is deprecated, and will be removed in a future version. Use FileMigrator#Up instead.
-	MigrateUp(path string) error
-	// MigrateDown is deprecated, and will be removed in a future version. Use FileMigrator#Down instead.
-	MigrateDown(path string, step int) error
-	// MigrateStatus is deprecated, and will be removed in a future version. Use FileMigrator#Status instead.
-	MigrateStatus(path string) error
-	// MigrateReset is deprecated, and will be removed in a future version. Use FileMigrator#Reset instead.
-	MigrateReset(path string) error
 
 	// Paginate records returned from the database.
 	//
@@ -360,26 +351,6 @@ func (c *ConnectionAdapter) Select(fields ...string) *pop.Query {
 	return c.conn.Select(fields...)
 }
 
-// MigrateUp is deprecated, and will be removed in a future version. Use FileMigrator#Up instead.
-func (c *ConnectionAdapter) MigrateUp(path string) error {
-	return c.conn.MigrateUp(path)
-}
-
-// MigrateDown is deprecated, and will be removed in a future version. Use FileMigrator#Down instead.
-func (c *ConnectionAdapter) MigrateDown(path string, step int) error {
-	return c.conn.MigrateDown(path, step)
-}
-
-// MigrateStatus is deprecated, and will be removed in a future version. Use FileMigrator#Status instead.
-func (c *ConnectionAdapter) MigrateStatus(path string) error {
-	return c.conn.MigrateStatus(path)
-}
-
-// MigrateReset is deprecated, and will be removed in a future version. Use FileMigrator#Reset instead.
-func (c *ConnectionAdapter) MigrateReset(path string) error {
-	return c.conn.MigrateReset(path)
-}
-
 // Paginate records returned from the database.
 //
 //	return c.conn.Paginate(2, 15)
@@ -411,8 +382,8 @@ func (c *ConnectionAdapter) RawQuery(stmt string, args ...interface{}) *pop.Quer
 // by defaults loads all the associations on the model,
 // but can take a variadic list of associations to load.
 //
-// 	c.Eager().Find(model, 1) // will load all associations for model.
-// 	c.Eager("Books").Find(model, 1) // will load only Book association for model.
+//	c.Eager().Find(model, 1) // will load all associations for model.
+//	c.Eager("Books").Find(model, 1) // will load only Book association for model.
 func (c *ConnectionAdapter) Eager(fields ...string) Connection {
 	popConn := c.conn.Eager(fields...)
 	return NewConnectionAdapter(popConn)
@@ -421,15 +392,15 @@ func (c *ConnectionAdapter) Eager(fields ...string) Connection {
 // Where will append a where clause to the query. You may use `?` in place of
 // arguments.
 //
-// 	c.Where("id = ?", 1)
-// 	q.Where("id in (?)", 1, 2, 3)
+//	c.Where("id = ?", 1)
+//	q.Where("id in (?)", 1, 2, 3)
 func (c *ConnectionAdapter) Where(stmt string, args ...interface{}) *pop.Query {
 	return c.conn.Where(stmt, args...)
 }
 
 // Order will append an order clause to the query.
 //
-// 	c.Order("name desc")
+//	c.Order("name desc")
 func (c *ConnectionAdapter) Order(stmt string) *pop.Query {
 	return c.conn.Order(stmt)
 }

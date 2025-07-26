@@ -3,12 +3,12 @@ package ipop
 import (
 	"errors"
 	"fmt"
+	"github.com/gobuffalo/pop/v6"
 	"log"
 	"net/url"
 	"testing"
 
-	"github.com/dnnrly/ipop/testdata/models"
-	"github.com/gobuffalo/pop"
+	"github.com/kiihela/ipop/testdata/models"
 	"github.com/stretchr/testify/assert"
 )
 

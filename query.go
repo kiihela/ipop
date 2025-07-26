@@ -1,7 +1,7 @@
 package ipop
 
 import (
-	"github.com/gobuffalo/pop"
+	"github.com/gobuffalo/pop/v6"
 )
 
 // Query ...
