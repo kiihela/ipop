@@ -3,11 +3,13 @@ package ipop
 import (
 	"github.com/gobuffalo/pop/v6"
 	"github.com/gobuffalo/validate/v3"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockConnection is a mock implementation of the Connection interface.
 // You can embed this struct in your tests and override methods as needed.
 type MockConnection struct {
+	mock.Mock
 	StringFunc             func() string
 	URLFunc                func() string
 	MigrationURLFunc       func() string
